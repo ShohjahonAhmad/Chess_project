@@ -218,6 +218,8 @@ class Board:
                         Rook('white').image, Bishop('white').image]
         self.bimages = [Pawn('black').image, Queen('black').image, King('black').image, Knight('black').image, 
                         Rook('black').image, Bishop('black').image]
+        self.wppieces = [Rook('white'), Knight('white'), Bishop('white'), Queen('white')]
+        self.bppieces = [Rook('black'), Knight('black'), Bishop('black'), Queen('black')]
         # self.piece_list = ['pawn', 'queen', 'king', 'knight', 'rook', 'bishop'] might be useless
         self.wking = self.white_pieces[4]
         self.bking = self.black_pieces[4]
@@ -273,6 +275,9 @@ winner = ''
 game_over = False
 button = 'RESIGN'
 close = False
+white_promotion = False
+black_promotion = False
+promote_index = 100
 def draw_board():
     for i in range(32):
         column = i % 4
@@ -299,6 +304,11 @@ def draw_board():
             screen.blit(medium_font.render(button, True, 'white'), (822, 818))
         else:
             screen.blit(medium_font.render(button, True, 'white'), (805, 818))
+            
+        if white_promotion or black_promotion:
+            pygame.draw.rect(screen, "burlywood2", [0, 800, WIDTH - 200, 100])
+            pygame.draw.rect(screen, "darkgoldenrod4", [0, 800, WIDTH - 200, 100], 5)
+            screen.blit(big_font.render("Select a Piece to Promote Pawn", True, "white"), (50, 825))
 def draw_pieces():
     for i in range(len(board.white_pieces)):
        piece = board.white_pieces[i]
@@ -380,6 +390,53 @@ def check_options(pieces, locations, turn):
         all_moves.append(piece.get_valid_moves(location, board))
     return all_moves
 valid_moves = []
+
+def check_promotion():
+    pawn_indexes = []
+    white_promotion = False
+    black_promotion = False
+    promote_index = 100
+    for i in range(len(board.white_pieces)):
+        if board.white_pieces[i].name == 'pawn':
+            pawn_indexes.append(i)
+    for i in range(len(pawn_indexes)):
+        if board.wlocations[pawn_indexes[i]][1] == 0:
+            white_promotion = True
+            promote_index = pawn_indexes[i]
+    pawn_indexes = []
+    for i in range(len(board.black_pieces)):
+        if board.black_pieces[i].name == 'pawn':
+            pawn_indexes.append(i)
+    for i in range(len(pawn_indexes)):
+        if board.blocations[pawn_indexes[i]][1] == 7:
+            black_promotion = True
+            promote_index = pawn_indexes[i]
+    return white_promotion, black_promotion, promote_index
+
+def draw_promotion():
+    pygame.draw.rect(screen, 'cornsilk4', [800, 0, 200, 420])
+    if white_promotion:
+        for i in range(len(board.wppieces)):
+            piece = board.wppieces[i]
+            screen.blit(piece.image, (860, 5 + 100 * i))
+    elif black_promotion:
+        for i in range(len(board.bppieces)):
+            piece = board.bppieces[i]
+            screen.blit(piece.image, (860, 5 + 100 * i))
+    pygame.draw.rect(screen, 'cornsilk3', [800, 0, 200, 420], 5)
+
+def check_selection():
+    mouse_position = pygame.mouse.get_pos()
+    left_click = pygame.mouse.get_pressed()[0]
+    x_pos = mouse_position[0] // 100
+    y_pos = mouse_position[1] // 100
+    if white_promotion and left_click and x_pos > 7 and y_pos < 4:
+        board.white_pieces[promote_index] = board.wppieces[y_pos]
+    elif black_promotion and left_click and x_pos > 7 and y_pos < 4:
+        board.black_pieces[promote_index] = board.bppieces[y_pos]
+    
+    
+valid_moves = []
 black_options = check_options(board.black_pieces, board.blocations, 'black')
 white_options = check_options(board.white_pieces, board.wlocations, 'white')
 run = True
@@ -394,6 +451,12 @@ while run:
     draw_pieces()
     draw_captured()
     draw_check()
+    if not game_over:
+        white_promotion, black_promotion, promote_index = check_promotion()
+        if white_promotion or black_promotion:
+            draw_promotion()
+            check_selection()
+        
     if selection != 100:
         if turn_step < 2:
             valid_moves = board.white_pieces[selection].get_valid_moves(board.wlocations[selection], board)  
