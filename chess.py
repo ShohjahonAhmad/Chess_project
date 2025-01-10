@@ -21,26 +21,26 @@ class Pawn(Piece):
         x, y = position
         
         if self.color == 'black':
-            
-                if (x, y + 1) not in board.blocations and (x, y + 1) not in board.wlocations and y < 7:
-                    moves.append((x, y + 1))
-                    if (x, y + 2) not in board.blocations and (x, y + 2) not in board.wlocations and y == 1:
-                        moves.append((x, y + 2))
-                if (x + 1, y + 1) in board.wlocations:
-                    moves.append((x + 1, y + 1))
-                if (x - 1, y + 1) in board.wlocations:
-                    moves.append((x - 1, y + 1))
+            if (x, y + 1) not in board.blocations and (x, y + 1) not in board.wlocations and y < 7:
+                moves.append((x, y + 1))
+                if (x, y + 2) not in board.blocations and (x, y + 2) not in board.wlocations and y == 1:
+                    moves.append((x, y + 2))
+            if (x + 1, y + 1) in board.wlocations:
+                moves.append((x + 1, y + 1))
+            if (x - 1, y + 1) in board.wlocations:
+                moves.append((x - 1, y + 1))
         elif self.color == 'white':
-                if (x, y - 1) not in board.wlocations and (x, y - 1) not in board.blocations and y > 0:
-                    moves.append((x, y - 1))
-                    if (x, y - 2) not in board.wlocations and (x, y + 2) not in board.blocations and y == 6:
-                        moves.append((x, y - 2))
-                if (x + 1, y - 1) in board.blocations:
-                    moves.append((x + 1, y - 1))
-                if (x - 1, y - 1) in board.blocations:
-                    moves.append((x - 1, y - 1))
+            if (x, y - 1) not in board.wlocations and (x, y - 1) not in board.blocations and y > 0:
+                moves.append((x, y - 1))
+                if (x, y - 2) not in board.wlocations and (x, y - 2) not in board.blocations and y == 6:
+                    moves.append((x, y - 2))
+            if (x + 1, y - 1) in board.blocations:
+                moves.append((x + 1, y - 1))
+            if (x - 1, y - 1) in board.blocations:
+                moves.append((x - 1, y - 1))
 
         return moves
+    
 class Rook(Piece):
     def __init__(self, color):
         super().__init__(color) # Call the base class constructor
@@ -220,24 +220,11 @@ class Board:
                         Rook('black').image, Bishop('black').image]
         self.wppieces = [Rook('white'), Knight('white'), Bishop('white'), Queen('white')]
         self.bppieces = [Rook('black'), Knight('black'), Bishop('black'), Queen('black')]
-        # self.piece_list = ['pawn', 'queen', 'king', 'knight', 'rook', 'bishop'] might be useless
         self.wking = self.white_pieces[4]
         self.bking = self.black_pieces[4]
-        self.setup_board()
-    def setup_board(self):
-        self.board[0] = [Rook('black'), Knight('black'), Bishop('black'), Queen('black'), King('black'), Bishop('black'), Knight('black'), Rook('black')]
-        self.board[1] = [Pawn('black')] * 8
-        self.board[6] = [Pawn('white')] * 8
-        self.board[7] = [Rook('white'), Knight('white'), Bishop('white'), Queen('white'), King('white'), Bishop('white'), Knight('white'), Rook('white')]
-    def is_empty(self, position):
-        x, y = position
-        return self.board[x][y] is None
     def get_piece(self, position):
         x, y = position
         return self.board[x][y] 
-    def is_valid_position(self, position):
-        x, y = position
-        return 0 <= x <= 7 and 0 <= y <= 7
     def move_piece(self, start, end):
         piece = self.get_piece(start)
         if piece and end in piece.get_valid_moves(start, self):
@@ -245,15 +232,6 @@ class Board:
             self.board[start[1]][start[0]] = None
             return True
         return False
-    # def white_pieces(self):
-    #     return self.white_pieces
-    # def black_pieces(self):
-    #     return self.black_pieces
-    # def print_board(self):
-    #     for row in self.board:
-    #         print(" | ".join([type(piece).__name__[0] if piece else '.' for piece in row]))
-    #         print("-" * 17)
-    
 pygame.init()
 board = Board()
 WIDTH = 1000
