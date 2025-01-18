@@ -214,10 +214,6 @@ class Board:
                              Knight('white'), Rook('white'), Pawn('white'), Pawn('white'), Pawn('white'), Pawn('white'), Pawn('white'), Pawn('white'), Pawn('white'), Pawn('white')]
         self.black_pieces = [Rook('black'), Knight('black'), Bishop('black'), Queen('black'), King('black'), Bishop('black'), 
                              Knight('black'), Rook('black'), Pawn('black'), Pawn('black'), Pawn('black'), Pawn('black'), Pawn('black'), Pawn('black'), Pawn('black'), Pawn('black')]
-        self.wimages = [Pawn('white').image, Queen('white').image, King('white').image, Knight('white').image, 
-                        Rook('white').image, Bishop('white').image]
-        self.bimages = [Pawn('black').image, Queen('black').image, King('black').image, Knight('black').image, 
-                        Rook('black').image, Bishop('black').image]
         self.wppieces = [Rook('white'), Knight('white'), Bishop('white'), Queen('white')]
         self.bppieces = [Rook('black'), Knight('black'), Bishop('black'), Queen('black')]
         self.wking = self.white_pieces[4]
@@ -255,11 +251,15 @@ button = 'RESIGN'
 close = False
 white_promotion = False
 black_promotion = False
+move_counter = 0
+moves = {
+    0: (board.wlocations.copy(), board.blocations.copy(), board.white_pieces.copy(), board.black_pieces.copy())
+}
 promote_index = 100
 def draw_board():
     for i in range(32):
-        column = i % 4
-        row = i // 4
+        column = i % 4 # 0, 1, 2, 3
+        row = i // 4 # 0 {4}, 1 {4}, 2{4}
         if row % 2 == 0:
             pygame.draw.rect(
                 screen, "burlywood2", [700 - (column * 200), row * 100, 100, 100]
@@ -294,7 +294,7 @@ def draw_pieces():
        screen.blit(piece.image, (location[0] * 100 + 5, location[1] * 100 + 5))
        if turn_step < 2:
            if selection == i:
-               pygame.draw.rect(screen, 'aqua', [location[0] * 100 + 1, location[1] * 100 + 1, 100, 100], 2)
+               pygame.draw.rect(screen, 'aqua', [location[0] * 100, location[1] * 100, 100, 100], 2)
 
     for i in range(len(board.black_pieces)):
        piece = board.black_pieces[i]
@@ -302,7 +302,7 @@ def draw_pieces():
        screen.blit(piece.image, (location[0] * 100 + 5, location[1] * 100 + 5))
        if turn_step >= 2:
            if selection == i:
-               pygame.draw.rect(screen, 'firebrick1', [location[0] * 100 + 1, location[1] * 100 + 1, 100, 100], 2)
+               pygame.draw.rect(screen, 'firebrick1', [location[0] * 100, location[1] * 100, 100, 100], 2)
 def draw_options(moves):
     if turn_step < 2:
         color = 'aqua'
@@ -469,6 +469,9 @@ while run:
                             close = True
                         board.black_pieces.pop(black_piece)
                         board.blocations.pop(black_piece)
+                    move_counter += 1
+                    moves[move_counter] = (board.wlocations.copy(), board.blocations.copy(), board.white_pieces.copy(), board.black_pieces.copy())
+
                         
                     black_options = check_options(board.black_pieces, board.blocations, 'black')
                     white_options = check_options(board.white_pieces, board.wlocations, 'white')
@@ -496,6 +499,8 @@ while run:
                             close = True
                         board.white_pieces.pop(white_piece)
                         board.wlocations.pop(white_piece)
+                    move_counter += 1
+                    moves[move_counter] = (board.wlocations.copy(), board.blocations.copy(), board.white_pieces.copy(), board.black_pieces.copy())
                     black_options = check_options(board.black_pieces, board.blocations, 'black')
                     white_options = check_options(board.white_pieces, board.wlocations, 'white')
                     turn_step = 0
@@ -521,6 +526,10 @@ while run:
                         captured_black = []
                         turn_step = 0
                         selection = 100
+                        move_counter = 0
+                        moves = {
+                            0: (board.wlocations.copy(), board.blocations.copy(), board.white_pieces.copy(), board.black_pieces.copy())
+                        }
                         valid_moves = []
                         black_options = check_options(board.black_pieces, board.blocations, 'black')
                         white_options = check_options(board.white_pieces, board.wlocations, 'white')
@@ -529,6 +538,23 @@ while run:
             mouse_pos = event.pos
             if close_button.collidepoint(mouse_pos):
                 close = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                if move_counter > 0:
+                    move_counter -= 1 
+                    board.wlocations = moves[move_counter][0]
+                    board.blocations = moves[move_counter][1]
+                    board.white_pieces = moves[move_counter][2]
+                    board.black_pieces = moves[move_counter][3]
+                
+            elif event.key == pygame.K_RIGHT:
+                if move_counter < len(moves) - 1:
+                    move_counter += 1 
+                    board.wlocations = moves[move_counter][0]
+                    board.blocations = moves[move_counter][1]
+                    board.white_pieces = moves[move_counter][2]
+                    board.black_pieces = moves[move_counter][3]
+            print(f"Move Counter: {move_counter}")
     if winner != '':
         game_over = True
         if close == True:
