@@ -1,4 +1,5 @@
 import pygame
+import chess
 
 class Piece:
     def __init__(self,color):
@@ -202,9 +203,9 @@ class King(Piece):
                 moves.append(move)
         
         return moves            
-class Board:
+class Board1:
     def __init__(self):
-        self.board = [[None] * 8 for _ in range(8)]
+        self.eboard = chess.Board()
         self.blocations = [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0),
                            (0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1)]
         self.wlocations = [(0, 7), (1, 7), (2, 7), (3, 7), (4, 7), (5, 7), (6, 7), (7, 7),
@@ -218,18 +219,8 @@ class Board:
         self.bppieces = [Rook('black'), Knight('black'), Bishop('black'), Queen('black')]
         self.wking = self.white_pieces[4]
         self.bking = self.black_pieces[4]
-    def get_piece(self, position):
-        x, y = position
-        return self.board[x][y] 
-    def move_piece(self, start, end):
-        piece = self.get_piece(start)
-        if piece and end in piece.get_valid_moves(start, self):
-            self.board[end[1]][end[0]] = piece
-            self.board[start[1]][start[0]] = None
-            return True
-        return False
 pygame.init()
-board = Board()
+board = Board1()
 WIDTH = 1000
 HEIGHT = 900
 screen = pygame.display.set_mode([WIDTH, HEIGHT])
@@ -449,7 +440,7 @@ while run:
             x_coord, y_coord = event.pos[0] // 100, event.pos[1] // 100
             click_coords = (x_coord, y_coord)
             if turn_step < 2:
-                if click_coords == (8, 8) or click_coords == (9, 8):
+                if click_coords == (8, 8) or click_coords == (9, 8) or board.eboard.is_checkmate():
                     winner = 'black'
                     button = 'RESTART'
                     close = True
@@ -458,8 +449,8 @@ while run:
                     if turn_step == 0:
                         turn_step = 1
                 if click_coords in valid_moves and selection != 100:
+                    current_position = board.wlocations[selection] if turn_step < 2 else board.blocations[selection]
                     board.wlocations[selection] = click_coords
-                    board.move_piece(board.wlocations[selection], click_coords)
                     if click_coords in board.blocations:
                         black_piece = board.blocations.index(click_coords)
                         captured_white.append(board.black_pieces[black_piece])
@@ -469,6 +460,13 @@ while run:
                             close = True
                         board.black_pieces.pop(black_piece)
                         board.blocations.pop(black_piece)
+                    uci_move = f"{chr(current_position[0] + 97)}{8 - current_position[1]}{chr(click_coords[0] + 97)}{8 - click_coords[1]}"
+                    print(uci_move)
+                    board.eboard.push_uci(uci_move)
+                    if board.eboard.is_checkmate():
+                        winner = "black" if turn_step < 2 else "white"  # Determine the winner based on the turn
+                        button = 'RESTART'
+                        close = True
                     move_counter += 1
                     moves[move_counter] = (board.wlocations.copy(), board.blocations.copy(), board.white_pieces.copy(), board.black_pieces.copy())
 
@@ -479,7 +477,7 @@ while run:
                     selection = 100
                     valid_moves = []
             if turn_step >= 2:
-                if click_coords == (8, 8) or click_coords == (9, 8):
+                if click_coords == (8, 8) or click_coords == (9, 8) or board.eboard.is_checkmate():
                     winner = 'white'
                     button = 'RESTART'
                     close = True
@@ -488,8 +486,8 @@ while run:
                     if turn_step == 2:
                         turn_step = 3
                 if click_coords in valid_moves and selection != 100:
+                    current_position = board.wlocations[selection] if turn_step < 2 else board.blocations[selection]
                     board.blocations[selection] = click_coords
-                    board.move_piece(board.blocations[selection], click_coords)
                     if click_coords in board.wlocations:
                         white_piece = board.wlocations.index(click_coords)
                         captured_black.append(board.white_pieces[white_piece])
@@ -499,6 +497,13 @@ while run:
                             close = True
                         board.white_pieces.pop(white_piece)
                         board.wlocations.pop(white_piece)
+                    uci_move = f"{chr(current_position[0] + 97)}{8 - current_position[1]}{chr(click_coords[0] + 97)}{8 - click_coords[1]}"
+                    print(uci_move)
+                    board.eboard.push_uci(uci_move)
+                    if board.eboard.is_checkmate():
+                        winner = "black" if turn_step >= 2 else "white"  # Determine the winner based on the turn
+                        button = 'RESTART'
+                        close = True
                     move_counter += 1
                     moves[move_counter] = (board.wlocations.copy(), board.blocations.copy(), board.white_pieces.copy(), board.black_pieces.copy())
                     black_options = check_options(board.black_pieces, board.blocations, 'black')
@@ -511,6 +516,7 @@ while run:
             click_coords = (x_coord, y_coord)
             if click_coords == (8, 8) or click_coords == (9, 8) and game_over:  
                 if button == 'RESTART':
+                        board.eboard = chess.Board()
                         game_over = False
                         close = False
                         winner = ''
