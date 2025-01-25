@@ -11,7 +11,6 @@ By Knightly Coders
 - Complete chess piece movement rules
 - Turn-based gameplay (White vs Black)
 - Piece capture mechanics
-- Pawn promotion
 - Game state tracking
 - Visual move suggestions
 - Check detection
